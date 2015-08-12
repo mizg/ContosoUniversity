@@ -15,11 +15,42 @@ namespace ContosoUniversity.Controllers
     {
         private SchoolContext db = new SchoolContext();
 
-        // GET: Student
-        public ActionResult Index()
+        public ActionResult Index(string sortOrder, string searchString)
+            //added ,string searchString here as part of p. 62 MVC5 EF6 Contoso University tutorial
+    {
+        ViewBag.NameSortParm = String.IsNullOrEmpty(sortOrder) ? "name_desc" : "";
+        ViewBag.DateSortParm = sortOrder == "Date" ? "date_desc" : "Date";
+        var students = from s in db.Students
+                       select s;
+
+            //This section added per p. 62 to add search function
+        if (!String.IsNullOrEmpty(searchString)) { students = students.Where(s => s.LastName.ToUpper().Contains(searchString.ToUpper()) || s.FirstMidName.ToUpper().Contains(searchString.ToUpper())); }
+            //up to this point...
+        switch (sortOrder)
         {
-            return View(db.Students.ToList());
+            case "name_desc":
+                students = students.OrderByDescending(s => s.LastName);
+                break;
+            case "Date":
+                students = students.OrderBy(s => s.EnrollmentDate);
+                break;
+            case "date_desc":
+                students = students.OrderByDescending(s => s.EnrollmentDate);
+                break;
+            default:
+                students = students.OrderBy(s => s.LastName);
+                break;
         }
+        return View(students.ToList());
+    }
+
+
+        //Replaced this code (Index method) with the code above:
+        //// GET: Student
+        //public ActionResult Index()
+        //{
+        //    return View(db.Students.ToList());
+        //}
 
         // GET: Student/Details/5
         public ActionResult Details(int? id)
