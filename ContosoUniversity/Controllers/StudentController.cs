@@ -8,6 +8,10 @@ using System.Web;
 using System.Web.Mvc;
 using ContosoUniversity.DAL;
 using ContosoUniversity.Models;
+using PagedList;
+
+
+
 
 namespace ContosoUniversity.Controllers
 {
@@ -15,13 +19,37 @@ namespace ContosoUniversity.Controllers
     {
         private SchoolContext db = new SchoolContext();
 
-        public ActionResult Index(string sortOrder, string searchString)
+
+        public ActionResult Index(string sortOrder, string currentFilter, string searchString, int? page)
             //added ,string searchString here as part of p. 62 MVC5 EF6 Contoso University tutorial
     {
+        ViewBag.CurrentSort = sortOrder;
         ViewBag.NameSortParm = String.IsNullOrEmpty(sortOrder) ? "name_desc" : "";
         ViewBag.DateSortParm = sortOrder == "Date" ? "date_desc" : "Date";
+
+        if (searchString != null)
+        {
+            page = 1;
+        }
+        else
+        {
+            searchString = currentFilter;
+        }
+
+        ViewBag.CurrentFilter = searchString;  
+          
         var students = from s in db.Students
                        select s;
+
+
+        //OLD Code replaced per p.63-66 of tutorial PDF
+        //    public ActionResult Index(string sortOrder, string searchString)
+        //        //added ,string searchString here as part of p. 62 MVC5 EF6 Contoso University tutorial
+        //{
+        //    ViewBag.NameSortParm = String.IsNullOrEmpty(sortOrder) ? "name_desc" : "";
+        //    ViewBag.DateSortParm = sortOrder == "Date" ? "date_desc" : "Date";
+        //    var students = from s in db.Students
+        //                   select s;
 
             //This section added per p. 62 to add search function
         if (!String.IsNullOrEmpty(searchString)) { students = students.Where(s => s.LastName.ToUpper().Contains(searchString.ToUpper()) || s.FirstMidName.ToUpper().Contains(searchString.ToUpper())); }
@@ -41,7 +69,12 @@ namespace ContosoUniversity.Controllers
                 students = students.OrderBy(s => s.LastName);
                 break;
         }
-        return View(students.ToList());
+
+        int pageSize = 3;
+        int pageNumber = (page ?? 1);
+        return View(students.ToPagedList(pageNumber, pageSize));
+         //Part of Old Code
+         //return View(students.ToList());
     }
 
 
